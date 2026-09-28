@@ -275,22 +275,22 @@
     <div id="tab-photos" class="tab-content active">
       <div class="section">
         <div class="film-card">
-          <p class="film-label">fotos enviadas</p>
-          <p class="film-number"><span id="photos-count">0</span><span style="font-size:1.1rem;color:rgba(255,255,255,0.28)"> / 12</span></p>
-          <p class="film-sub">📷 máximo 12 fotos por convidado</p>
+          <p class="film-label">fotos e vídeos enviados</p>
+          <p class="film-number"><span id="photos-count">0</span></p>
+          <p class="film-sub">📷🎥 envie à vontade!</p>
         </div>
         <label class="upload-zone" id="photo-zone">
-          <div class="upload-zone-icon">📸</div>
-          <p class="upload-zone-title">Enviar Fotos</p>
-          <p class="upload-zone-sub">Escolha da galeria ou tire agora</p>
-          <input type="file" id="photo-input" accept="image/*" multiple onchange="handlePhotos(this.files)">
+          <div class="upload-zone-icon">📸🎥</div>
+          <p class="upload-zone-title">Enviar Fotos e Vídeos</p>
+          <p class="upload-zone-sub">Escolha da galeria ou grave agora</p>
+          <input type="file" id="photo-input" accept="image/*,video/*" multiple onchange="handlePhotos(this.files)">
         </label>
         <div id="photo-progress" class="hidden">
           <div class="progress-wrap"><div class="progress-fill" id="photo-bar"></div></div>
           <p class="progress-lbl" id="photo-lbl">Enviando...</p>
         </div>
         <div id="photos-grid" class="photos-grid"></div>
-        <p class="camera-hint">Suas fotos ficam salvas e os noivos veem tudo depois. 🌿</p>
+        <p class="camera-hint">Suas fotos e vídeos ficam salvos e os noivos veem tudo depois. 🌿</p>
       </div>
     </div>
 
@@ -409,7 +409,7 @@
 const SB_URL  = 'https://rffgwaisnhqnovaazuio.supabase.co';
 const SB_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJmZmd3YWlzbmhxbm92YWF6dWlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA2MjY4NTksImV4cCI6MjEwNjIwMjg1OX0._34wiljZkBwdms3iu6jiZnYVIOnAvcPupt-1iQnZ7e0';
 const ADMIN_PW    = 'jevillyn2026';
-const MAX_PHOTOS  = 12;
+const MAX_PHOTOS  = 9999; // sem limite
 const MAX_SECS    = 30;
 const REVEAL_DATE = new Date('2026-12-20T06:00:00-03:00');
 
@@ -473,19 +473,12 @@ async function handleEnter() {
 // ─── FOTOS ─────────────────────────────
 function updateCount() {
   const el = document.getElementById('photos-count');
-  if (el) { el.textContent=photosSent; el.style.color=photosSent>=MAX_PHOTOS?'#e74c3c':photosSent>=9?'#f39c12':'white'; }
-  const inp = document.getElementById('photo-input');
-  if (inp) inp.disabled = photosSent >= MAX_PHOTOS;
-  const zone = document.getElementById('photo-zone');
-  if (zone) zone.style.opacity = photosSent>=MAX_PHOTOS?'0.45':'1';
+  if (el) { el.textContent = photosSent; el.style.color = 'white'; }
 }
 
 async function handlePhotos(files) {
   if (!files?.length || !guest) return;
-  const avail = MAX_PHOTOS - photosSent;
-  if (avail<=0) { toast('Limite de 12 fotos atingido! 🎞️','error'); return; }
-  const list = Array.from(files).slice(0, avail);
-  if (list.length < files.length) toast('Limite próximo — enviando somente '+(avail)+' foto(s).','info');
+  const list = Array.from(files);
 
   showProg('photo', true);
   const grid = document.getElementById('photos-grid');
@@ -493,9 +486,15 @@ async function handlePhotos(files) {
 
   for (const f of list) {
     try {
-      const blob = await compress(f, 1280, 0.82);
-      const path = guest.id+'/'+Date.now()+'_'+Math.random().toString(36).slice(2,5)+'.jpg';
-      const url  = await upStorage('wedding-photos', path, blob, 'image/jpeg');
+      const isVideo = f.type.startsWith('video/');
+      const ext = isVideo ? (f.name.split('.').pop() || 'mp4') : 'jpg';
+      const bucket = isVideo ? 'wedding-audios' : 'wedding-photos'; // reutilizamos wedding-audios para vídeos
+      const ts = Date.now()+'_'+Math.random().toString(36).slice(2,5);
+      let uploadBlob = f;
+      let mime = f.type || (isVideo ? 'video/mp4' : 'image/jpeg');
+      if (!isVideo) { uploadBlob = await compress(f, 1280, 0.82); mime = 'image/jpeg'; }
+      const path = guest.id+'/'+ts+'.'+ext;
+      const url  = await upStorage(bucket, path, uploadBlob, mime);
       const { error } = await db.from('photos').insert({guest_id:guest.id, guest_name:guest.name, file_path:path, file_url:url, revealed:false});
       if (error) throw error;
       photosSent++; done++;
@@ -659,7 +658,14 @@ function renderPhotos(list) {
   note.classList.add('hidden');
   const el=document.getElementById('admin-photos');
   if(!list.length){el.innerHTML='<p class="empty-msg" style="grid-column:span 2">Nenhuma foto ainda 📷</p>';return;}
-  el.innerHTML=list.map(p=>'<div class="admin-photo"><img src="'+p.file_url+'" loading="lazy"><div class="admin-photo-lbl"><span>'+p.guest_name+'</span><a href="'+p.file_url+'" download="foto_'+p.guest_name+'.jpg" style="color:white;font-size:0.65rem">⬇️</a></div></div>').join('');
+  el.innerHTML=list.map(p=>{
+    const isVideo = p.file_path && /\.(mp4|mov|avi|webm|mkv|m4v)$/i.test(p.file_path);
+    const media = isVideo
+      ? '<video src="'+p.file_url+'" controls style="width:100%;height:100%;object-fit:cover"></video>'
+      : '<img src="'+p.file_url+'" loading="lazy">';
+    const dl = '<a href="'+p.file_url+'" download="'+(isVideo?'video':'foto')+'_'+p.guest_name+(isVideo?'.mp4':'.jpg')+'" style="color:white;font-size:0.65rem">⬇️</a>';
+    return '<div class="admin-photo">'+media+'<div class="admin-photo-lbl"><span>'+(isVideo?'🎥 ':'')+p.guest_name+'</span>'+dl+'</div></div>';
+  }).join('');
 }
 async function downloadAll() {
   const {data}=await db.from('photos').select('file_url,guest_name,id');
