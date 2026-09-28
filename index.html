@@ -654,20 +654,14 @@ function renderAudios(list) {
   el.innerHTML=list.map(a=>'<div class="audio-row"><div class="audio-meta"><span class="audio-name">💚 '+a.guest_name+'</span><span class="audio-date">'+new Date(a.created_at).toLocaleString('pt-BR')+'</span>'+(a.duration_seconds?'<span class="audio-dur">'+a.duration_seconds+'s</span>':'')+'</div><audio controls src="'+a.file_url+'" class="audio-player-small"></audio></div>').join('');
 }
 function renderPhotos(list) {
-  const revealed = new Date()>=REVEAL_DATE;
+  // Admin sempre vê tudo — sem restrição de data
   const note=document.getElementById('reveal-note');
-  if(!revealed){
-    const diff=REVEAL_DATE-new Date();
-    const h=Math.floor(diff/3600000), m=Math.floor((diff%3600000)/60000);
-    note.textContent='⏳ Fotos reveladas em: '+h+'h '+m+'min (20/12/2026 às 06h)';
-    note.classList.remove('hidden');
-  } else note.classList.add('hidden');
+  note.classList.add('hidden');
   const el=document.getElementById('admin-photos');
   if(!list.length){el.innerHTML='<p class="empty-msg" style="grid-column:span 2">Nenhuma foto ainda 📷</p>';return;}
-  el.innerHTML=list.map(p=>'<div class="admin-photo">'+(revealed?'<img src="'+p.file_url+'" loading="lazy"><div class="admin-photo-lbl"><span>'+p.guest_name+'</span><a href="'+p.file_url+'" download="foto_'+p.guest_name+'.jpg" style="color:white;font-size:0.65rem">⬇️</a></div>':'<div class="locked-photo">🔒<br>'+p.guest_name+'<br><small>'+new Date(p.created_at).toLocaleDateString('pt-BR')+'</small></div>')+'</div>').join('');
+  el.innerHTML=list.map(p=>'<div class="admin-photo"><img src="'+p.file_url+'" loading="lazy"><div class="admin-photo-lbl"><span>'+p.guest_name+'</span><a href="'+p.file_url+'" download="foto_'+p.guest_name+'.jpg" style="color:white;font-size:0.65rem">⬇️</a></div></div>').join('');
 }
 async function downloadAll() {
-  if(new Date()<REVEAL_DATE){toast('Fotos ainda não reveladas! 🔒','info');return;}
   const {data}=await db.from('photos').select('file_url,guest_name,id');
   if(!data?.length){toast('Nenhuma foto disponível.','info');return;}
   toast('Baixando '+data.length+' fotos...','info');
