@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Evillyn & João — Câmera com moldura</title>
+<meta name="description" content="Tire sua foto com a moldura do casamento de Evillyn e João e compartilhe nos Stories." />
+<meta name="theme-color" content="#1E3024" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;1,400&family=Dancing+Script:wght@600&family=Josefin+Sans:wght@300;400&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --musgo: #2F4838; --musgo-escuro: #1E3024; --papel: #FAF3E8; --salvia: #778676; --salvia-claro: #B7C3B4;
+    --seguro-topo: env(safe-area-inset-top, 0px); --seguro-base: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; background: var(--musgo-escuro); color: var(--papel);
+    font-family: "Cormorant Garamond", Georgia, serif; overscroll-behavior: none; }
+  body { display: flex; flex-direction: column; height: 100dvh; padding-top: var(--seguro-topo); }
+  button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+  button:focus-visible { outline: 2px solid var(--salvia-claro); outline-offset: 3px; }
+  [hidden] { display: none !important; }
+
+  /* Palco 9:16 — o que aparece aqui é exatamente o que sai na foto */
+  .palco-area { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 10px 12px 0; }
+  .palco { position: relative; aspect-ratio: 9 / 16; height: 100%; max-width: 100%; max-height: calc((100vw - 24px) * 16 / 9);
+    border-radius: 18px; overflow: hidden; background: #000; box-shadow: 0 18px 40px rgba(0,0,0,.4); }
+  .palco video, .palco .foto-pronta { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .palco video.espelho { transform: scaleX(-1); }
+  .palco .moldura { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  .flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+  .flash.ativo { animation: flash .45s ease-out; }
+  @keyframes flash { from { opacity: 1; } to { opacity: 0; } }
+
+  /* Controles */
+  .controles { padding: 14px 18px calc(var(--seguro-base) + 14px); }
+  .molduras { display: flex; justify-content: center; gap: 10px; margin-bottom: 14px; }
+  .opcao { width: 44px; height: 78px; border-radius: 8px; overflow: hidden; position: relative;
+    background: linear-gradient(160deg, #6b5a52, #3b3330); border: 2px solid transparent; opacity: .7; transition: opacity .15s, border-color .15s; }
+  .opcao.clara-fundo { background: linear-gradient(160deg, #f4ede2, #ddd3c6); }
+  .opcao canvas { width: 100%; height: 100%; display: block; }
+  .opcao[aria-pressed="true"] { border-color: var(--papel); opacity: 1; }
+  .barra { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; max-width: 420px; margin: 0 auto; }
+  .lateral { width: 52px; height: 52px; border-radius: 50%; border: 1px solid rgba(250,243,232,.35);
+    display: flex; align-items: center; justify-content: center; }
+  .lateral.esq { justify-self: start; } .lateral.dir { justify-self: end; }
+  .obturador { width: 78px; height: 78px; border-radius: 50%; border: 3px solid var(--papel); padding: 5px; transition: transform .1s; }
+  .obturador span { display: block; width: 100%; height: 100%; border-radius: 50%; background: var(--papel); }
+  .obturador:active { transform: scale(.92); }
+  .dica { text-align: center; font-style: italic; font-size: 17px; color: rgba(250,243,232,.65); margin: 10px 0 0; }
+
+  /* Depois da foto */
+  .acoes { display: grid; gap: 10px; max-width: 420px; margin: 0 auto; }
+  .btn { border-radius: 999px; padding: 15px 20px; font-family: "Josefin Sans", system-ui, sans-serif;
+    font-size: 14px; letter-spacing: .14em; text-align: center; }
+  .btn.principal { background: var(--papel); color: var(--musgo-escuro); }
+  .btn.secundario { border: 1px solid rgba(250,243,232,.45); }
+  .duas { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  /* Abertura */
+  .abertura { position: fixed; inset: 0; z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 32px; background: radial-gradient(120% 70% at 50% 0%, var(--musgo) 0%, var(--musgo-escuro) 75%); }
+  .abertura .mono-abertura { width: 96px; height: auto; margin-bottom: 28px; }
+  .abertura h1 { font-family: "Dancing Script", cursive; font-weight: 600; font-size: 56px; line-height: 1.05; margin: 0; }
+  .abertura .data { font-family: "Josefin Sans", system-ui, sans-serif; font-weight: 300; letter-spacing: .38em; padding-left: .38em; font-size: 14px; margin: 16px 0 0; color: var(--salvia-claro); }
+  .abertura p.texto { font-size: 21px; line-height: 1.45; max-width: 320px; margin: 30px 0 34px; color: rgba(250,243,232,.85); }
+  .abertura .btn { min-width: 240px; }
+  .voltar { position: absolute; top: calc(var(--seguro-topo) + 16px); left: 18px; font-family: "Josefin Sans", system-ui, sans-serif; font-size: 13px; letter-spacing: .14em; color: rgba(250,243,232,.75); text-decoration: none; padding: 8px 4px; }
+  .erro { color: #f3c9b8; font-size: 18px; max-width: 320px; margin-top: 18px; }
+
+  .aviso { position: fixed; left: 50%; bottom: calc(var(--seguro-base) + 150px); transform: translateX(-50%); z-index: 20;
+    background: var(--papel); color: var(--musgo-escuro); padding: 12px 20px; border-radius: 999px; font-size: 18px; box-shadow: 0 8px 20px rgba(0,0,0,.3); }
+</style>
+</head>
+<body>
+
+  <!-- Abertura: o toque do convidado libera a câmera (exigência do iPhone) -->
+  <section class="abertura" id="abertura">
+    <a class="voltar" href="/">&larr; Voltar ao app</a>
+    <svg class="mono-abertura" viewBox="0 0 336 385" role="img" aria-label="Monograma JE"><path id="mono-abertura" fill="#FAF3E8" fill-rule="evenodd" d=""/></svg>
+    <h1>Evillyn &amp; João</h1>
+    <p class="data">19.12.2026</p>
+    <p class="texto">Tire sua foto com a nossa moldura e compartilhe nos Stories.</p>
+    <button class="btn principal" id="btn-abrir">Abrir a câmera</button>
+    <button class="btn" id="btn-galeria-abertura" style="margin-top:6px">Usar uma foto da galeria</button>
+    <p class="erro" id="erro" hidden></p>
+  </section>
+
+  <main class="palco-area">
+    <div class="palco" id="palco">
+      <video id="video" autoplay playsinline muted></video>
+      <img class="foto-pronta" id="foto-pronta" alt="Sua foto com a moldura" hidden />
+      <canvas class="moldura" id="moldura" width="1080" height="1920" aria-hidden="true"></canvas>
+      <div class="flash" id="flash"></div>
+    </div>
+  </main>
+
+  <!-- Modo câmera -->
+  <section class="controles" id="controles-camera">
+    <div class="molduras" role="group" aria-label="Escolher moldura">
+      <button class="opcao" data-moldura="monograma-clara" aria-pressed="true" aria-label="Monograma, linhas claras"><canvas width="108" height="192" data-mini="monograma-clara"></canvas></button>
+      <button class="opcao clara-fundo" data-moldura="monograma-verde" aria-pressed="false" aria-label="Monograma, linhas verdes"><canvas width="108" height="192" data-mini="monograma-verde"></canvas></button>
+      <button class="opcao" data-moldura="lacre-clara" aria-pressed="false" aria-label="Lacre, linhas claras"><canvas width="108" height="192" data-mini="lacre-clara"></canvas></button>
+      <button class="opcao clara-fundo" data-moldura="lacre-verde" aria-pressed="false" aria-label="Lacre, linhas verdes"><canvas width="108" height="192" data-mini="lacre-verde"></canvas></button>
+    </div>
+    <div class="barra">
+      <button class="lateral esq" id="btn-galeria" aria-label="Escolher foto da galeria">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+      </button>
+      <button class="obturador" id="btn-foto" aria-label="Tirar foto"><span></span></button>
+      <button class="lateral dir" id="btn-virar" aria-label="Trocar câmera frontal ou traseira">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 21v-5h5"/></svg>
+      </button>
+    </div>
+    <p class="dica">Linhas verdes ficam melhores em fotos claras.</p>
+  </section>
+
+  <!-- Modo foto pronta -->
+  <section class="controles" id="controles-pronta" hidden>
+    <div class="acoes">
+      <button class="btn principal" id="btn-compartilhar">Compartilhar nos Stories</button>
+      <div class="duas">
+        <button class="btn secundario" id="btn-salvar">Salvar foto</button>
+        <button class="btn secundario" id="btn-outra">Tirar outra</button>
+      </div>
+    </div>
+  </section>
+
+  <input type="file" id="entrada-galeria" accept="image/*" hidden />
+  <canvas id="canvas" width="1080" height="1920" hidden></canvas>
+  <div class="aviso" id="aviso" role="status" hidden></div>
+
+<script>
+(() => {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const MONO_D = 'M53 372C41 370 31 366 23 358C15 350 13 344 13 335C13 328 16 323 23 320C30 316 33 316 39 319C45 322 47 327 47 334C45 352 45 353 47 357C55 370 76 366 83 351C90 337 91 324 91 274L92 234 95 224C103 201 115 186 144 163C159 152 167 142 169 134C170 131 169 130 162 128C153 126 139 118 133 112C124 103 120 95 120 83C120 75 121 74 124 68C130 55 143 46 160 44C173 42 181 44 179 48C178 49 176 50 168 51C153 53 146 56 140 66C137 71 136 82 138 88C143 103 160 115 182 121C197 124 196 125 196 115C196 99 202 83 213 69C236 40 286 25 312 40C328 49 328 73 312 92C300 106 275 121 251 126C244 128 234 130 230 131C226 131 223 132 222 132C221 134 225 144 228 147L231 150 239 148C251 145 262 145 268 148C279 153 278 162 267 167C260 170 244 170 232 165L224 163 217 166C208 171 194 185 186 198C161 237 163 288 191 307C205 316 227 318 246 312C280 300 307 256 299 223C296 208 291 203 278 203C262 203 250 211 242 227C238 234 237 239 236 250L236 260 232 260C226 260 225 258 225 248C225 234 230 223 241 211C253 198 266 193 280 195C302 198 312 214 311 240C309 261 299 282 282 299C269 312 259 318 241 324C232 327 231 327 213 327C191 327 187 326 173 319C136 300 126 252 151 209C159 195 177 177 186 172C189 171 194 168 196 166C199 165 204 162 207 160C211 158 214 157 214 156C214 156 212 154 209 151C207 148 203 143 201 139L198 133 189 133C184 132 180 132 180 132C179 132 178 136 176 140C170 149 163 159 157 164C154 166 148 171 143 174C129 186 114 204 108 216C103 228 101 238 101 251C102 270 107 282 119 298L125 305 124 314C123 324 118 337 113 345C102 364 76 375 53 372ZM122 287C112 273 107 250 111 234C113 224 123 205 126 205C127 205 127 222 127 248C127 276 127 291 126 291C125 291 124 289 122 287ZM92 202C92 200 92 166 92 126C92 55 92 39 89 32C86 25 82 22 72 19C69 19 67 18 67 16C67 13 72 13 110 14C147 14 147 14 141 19C130 29 130 30 127 44C126 48 125 51 122 55C108 74 107 91 121 112L126 120 126 142L126 165 115 176C106 186 102 191 93 205C92 206 92 206 92 202ZM265 160C270 155 264 151 253 153C244 154 239 156 239 157C241 162 261 163 265 160ZM240 121C280 113 312 87 312 62C312 51 306 45 292 44C274 43 258 51 243 70C233 82 224 103 222 117C222 124 221 124 240 121Z';
+  const W = 1080, H = 1920;              // tamanho do Stories
+  const NOME_ARQUIVO = 'evillyn-e-joao-19-12-2026.jpg';
+
+  let stream = null;
+  let frontal = true;                    // começa na câmera de selfie
+  let molduraAtual = 'monograma-clara';
+  let fotoBlob = null;
+
+  // ---------- Molduras desenhadas em código (nítidas em qualquer tela) ----------
+  const MONO = new Path2D(MONO_D);              // monograma JE vetorizado (336 × 385)
+  $('mono-abertura').setAttribute('d', MONO_D);
+
+  /** Lacre de cera desenhado em código: borda ondulada, anel e monograma em relevo. */
+  function desenharLacre(ctx, cx, cy, R) {
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = 16; ctx.shadowOffsetY = 8;
+    ctx.beginPath();
+    for (let i = 0; i <= 120; i++) {
+      const t = (i / 120) * Math.PI * 2;
+      const r = R * (1 + 0.045 * Math.sin(6 * t + 0.4) + 0.02 * Math.sin(11 * t + 1.3));
+      const px = cx + r * Math.cos(t), py = cy + r * Math.sin(t);
+      i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
+    }
+    const g = ctx.createRadialGradient(cx - R * .35, cy - R * .4, R * .1, cx, cy, R * 1.1);
+    g.addColorStop(0, '#4A6B54'); g.addColorStop(.55, '#2F4838'); g.addColorStop(1, '#1B2B20');
+    ctx.fillStyle = g; ctx.fill();
+    ctx.restore();
+    // disco interno levemente afundado
+    ctx.save();
+    ctx.beginPath(); ctx.arc(cx, cy, R * .74, 0, Math.PI * 2);
+    const g2 = ctx.createLinearGradient(cx, cy - R, cx, cy + R);
+    g2.addColorStop(0, '#26392C'); g2.addColorStop(1, '#3A5845');
+    ctx.fillStyle = g2; ctx.fill();
+    ctx.lineWidth = R * .035; ctx.strokeStyle = 'rgba(255,255,255,.12)'; ctx.stroke();
+    // monograma em relevo
+    const alt = R * 1.05, esc = alt / 385, larg = 336 * esc;
+    ctx.translate(cx - larg / 2, cy - alt / 2); ctx.scale(esc, esc);
+    ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.translate(0, 2 / esc); ctx.fill(MONO, 'evenodd');
+    ctx.translate(0, -2 / esc); ctx.fillStyle = '#9DAE9A'; ctx.fill(MONO, 'evenodd');
+    ctx.restore();
+  }
+  const CORES = {
+    clara: { linha: '#FAF3E8', sombra: 'rgba(20,30,24,.5)' },
+    verde: { linha: '#2F4838', sombra: 'rgba(250,243,232,.8)' }
+  };
+  const VARIANTES = {
+    'monograma-clara': { topo: 'mono', cor: 'clara' },
+    'monograma-verde': { topo: 'mono', cor: 'verde' },
+    'lacre-clara':     { topo: 'selo', cor: 'clara' },
+    'lacre-verde':     { topo: 'selo', cor: 'verde' }
+  };
+
+  /** Desenha a moldura em um contexto 1080 × 1920. */
+  function desenharMoldura(ctx, nome) {
+    const v = VARIANTES[nome], c = CORES[v.cor];
+    const gapE = v.topo === 'selo' ? 400 : 430, gapD = v.topo === 'selo' ? 680 : 650;
+    ctx.save();
+    ctx.strokeStyle = c.linha; ctx.fillStyle = c.linha;
+    ctx.shadowColor = c.sombra; ctx.shadowBlur = 6; ctx.shadowOffsetY = 2;
+    ctx.lineWidth = 3; ctx.lineCap = 'butt';
+    const traco = (pts) => { ctx.beginPath(); ctx.moveTo(...pts[0]); pts.slice(1).forEach((p) => ctx.lineTo(...p)); ctx.stroke(); };
+    traco([[gapE, 210], [90, 210], [90, 760]]);
+    traco([[gapD, 210], [990, 210], [990, 760]]);
+    traco([[90, 1180], [90, 1790], [990, 1790], [990, 1180]]);
+    // cantoneiras finas
+    ctx.lineWidth = 1.5; ctx.globalAlpha = .7;
+    traco([[104, 520], [104, 224], [300, 224]]); traco([[976, 520], [976, 224], [780, 224]]);
+    traco([[104, 1480], [104, 1776], [300, 1776]]); traco([[976, 1480], [976, 1776], [780, 1776]]);
+    ctx.globalAlpha = 1;
+
+    // topo: monograma ou lacre
+    if (v.topo === 'mono') {
+      const larg = 170, esc = larg / 336;
+      ctx.save(); ctx.translate((1080 - larg) / 2, 110); ctx.scale(esc, esc);
+      ctx.fill(MONO, 'evenodd'); ctx.restore();
+    } else {
+      desenharLacre(ctx, 540, 210, 118);
+    }
+
+    // nomes
+    ctx.textBaseline = 'alphabetic';
+    ctx.shadowBlur = 14; ctx.shadowOffsetY = 3;
+    const partes = [['Evillyn ', 150], ['& ', 110], ['João', 150]];
+    const larguras = partes.map(([t, s]) => { ctx.font = `600 ${s}px "Dancing Script", cursive`; return ctx.measureText(t).width; });
+    let x = (1080 - larguras.reduce((a, b) => a + b, 0)) / 2;
+    partes.forEach(([t, s], i) => { ctx.font = `600 ${s}px "Dancing Script", cursive`; ctx.fillText(t, x, 1572); x += larguras[i]; });
+
+    // data com espaçamento largo, letra por letra
+    ctx.shadowBlur = 10; ctx.shadowOffsetY = 2;
+    ctx.font = '300 46px "Josefin Sans", system-ui, sans-serif';
+    const data = '19.12.2026', esp = 46 * 0.42;
+    const total = [...data].reduce((s, ch) => s + ctx.measureText(ch).width + esp, 0) - esp;
+    let xd = (1080 - total) / 2;
+    for (const ch of data) { ctx.fillText(ch, xd, 1690); xd += ctx.measureText(ch).width + esp; }
+    ctx.restore();
+  }
+
+  function atualizarPreviaMoldura() {
+    const cv = $('moldura'), ctx = cv.getContext('2d');
+    ctx.clearRect(0, 0, W, H); desenharMoldura(ctx, molduraAtual);
+  }
+  function desenharMiniaturas() {
+    document.querySelectorAll('canvas[data-mini]').forEach((cv) => {
+      const ctx = cv.getContext('2d'); ctx.clearRect(0, 0, cv.width, cv.height);
+      ctx.save(); ctx.scale(cv.width / W, cv.height / H); desenharMoldura(ctx, cv.dataset.mini); ctx.restore();
+    });
+  }
+  const redesenhar = () => { atualizarPreviaMoldura(); desenharMiniaturas(); };
+  // Espera as fontes antes de desenhar (e redesenha quando chegarem)
+  Promise.all([
+    document.fonts.load('600 150px "Dancing Script"'),
+    document.fonts.load('300 46px "Josefin Sans"')
+  ]).catch(() => {}).finally(redesenhar);
+  redesenhar();
+
+  function aviso(texto) {
+    const el = $('aviso'); el.textContent = texto; el.hidden = false;
+    clearTimeout(aviso.t); aviso.t = setTimeout(() => (el.hidden = true), 2800);
+  }
+
+  // ---------- Câmera ----------
+  async function abrirCamera() {
+    pararCamera();
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: frontal ? 'user' : 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } },
+        audio: false
+      });
+      const v = $('video');
+      v.srcObject = stream;
+      v.classList.toggle('espelho', frontal);
+      $('abertura').hidden = true;
+    } catch (e) {
+      const erro = $('erro');
+      erro.textContent = e && e.name === 'NotAllowedError'
+        ? 'A câmera foi bloqueada. Libere o acesso nas configurações do navegador ou use uma foto da galeria.'
+        : 'Não conseguimos abrir a câmera. Abra este link no Safari ou no Chrome, ou use uma foto da galeria.';
+      erro.hidden = false;
+      $('abertura').hidden = false;
+    }
+  }
+  function pararCamera() { if (stream) stream.getTracks().forEach((t) => t.stop()); stream = null; }
+
+  $('btn-abrir').addEventListener('click', abrirCamera);
+  $('btn-virar').addEventListener('click', () => { frontal = !frontal; abrirCamera(); });
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) pararCamera();
+    else if ($('abertura').hidden && !$('controles-camera').hidden) abrirCamera();
+  });
+
+  // ---------- Escolha da moldura ----------
+  document.querySelectorAll('.opcao').forEach((b) => b.addEventListener('click', () => {
+    molduraAtual = b.dataset.moldura;
+    atualizarPreviaMoldura();
+    document.querySelectorAll('.opcao').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+  }));
+
+  // ---------- Montagem da foto (foto + moldura em 1080×1920) ----------
+  /** Desenha a fonte cobrindo 9:16, cortando o excesso (igual ao object-fit: cover). */
+  function desenharCobrindo(ctx, fonte, fw, fh, espelhar) {
+    const escala = Math.max(W / fw, H / fh);
+    const dw = fw * escala, dh = fh * escala;
+    ctx.save();
+    if (espelhar) { ctx.translate(W, 0); ctx.scale(-1, 1); }
+    ctx.drawImage(fonte, (W - dw) / 2, (H - dh) / 2, dw, dh);
+    ctx.restore();
+  }
+
+  function montar(fonte, fw, fh, espelhar) {
+    const ctx = $('canvas').getContext('2d');
+    ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
+    desenharCobrindo(ctx, fonte, fw, fh, espelhar);
+    desenharMoldura(ctx, molduraAtual);
+    return new Promise((res) => $('canvas').toBlob(res, 'image/jpeg', 0.92));
+  }
+
+  async function mostrarPronta(blob) {
+    fotoBlob = blob;
+    const img = $('foto-pronta');
+    if (img.src) URL.revokeObjectURL(img.src);
+    img.src = URL.createObjectURL(blob);
+    img.hidden = false;
+    $('video').hidden = true;
+    $('moldura').hidden = true;              // a moldura já está dentro da foto
+    $('controles-camera').hidden = true;
+    $('controles-pronta').hidden = false;
+    pararCamera();
+  }
+
+  $('btn-foto').addEventListener('click', async () => {
+    const v = $('video');
+    if (!stream || !v.videoWidth) return;
+    const f = $('flash'); f.classList.remove('ativo'); void f.offsetWidth; f.classList.add('ativo');
+    navigator.vibrate?.(30);
+    mostrarPronta(await montar(v, v.videoWidth, v.videoHeight, frontal));
+  });
+
+  // Foto da galeria
+  const abrirGaleria = () => $('entrada-galeria').click();
+  $('btn-galeria').addEventListener('click', abrirGaleria);
+  $('btn-galeria-abertura').addEventListener('click', abrirGaleria);
+  $('entrada-galeria').addEventListener('change', async (e) => {
+    const arquivo = e.target.files[0];
+    if (!arquivo) return;
+    const bmp = await createImageBitmap(arquivo).catch(() => null);
+    if (!bmp) { aviso('Não consegui abrir essa foto.'); return; }
+    $('abertura').hidden = true;
+    mostrarPronta(await montar(bmp, bmp.width, bmp.height, false));
+    e.target.value = '';
+  });
+
+  // ---------- Depois da foto ----------
+  $('btn-compartilhar').addEventListener('click', async () => {
+    const arquivo = new File([fotoBlob], NOME_ARQUIVO, { type: 'image/jpeg' });
+    if (navigator.canShare && navigator.canShare({ files: [arquivo] })) {
+      try { await navigator.share({ files: [arquivo] }); }
+      catch (e) { if (e.name !== 'AbortError') aviso('Não deu para compartilhar. Salve a foto e poste pelo Instagram.'); }
+    } else {
+      salvar();
+      aviso('Foto salva. Agora é só postar pelo Instagram.');
+    }
+  });
+
+  function salvar() {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(fotoBlob); a.download = NOME_ARQUIVO; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  }
+  $('btn-salvar').addEventListener('click', async () => {
+    // No iPhone, a folha de compartilhar tem "Salvar imagem", que manda direto para o Fotos
+    const arquivo = new File([fotoBlob], NOME_ARQUIVO, { type: 'image/jpeg' });
+    if (/iPhone|iPad/.test(navigator.userAgent) && navigator.canShare?.({ files: [arquivo] })) {
+      try { await navigator.share({ files: [arquivo] }); } catch {}
+    } else salvar();
+  });
+
+  $('btn-outra').addEventListener('click', () => {
+    $('foto-pronta').hidden = true;
+    $('video').hidden = false;
+    $('moldura').hidden = false;
+    $('controles-pronta').hidden = true;
+    $('controles-camera').hidden = false;
+    abrirCamera();
+  });
+})();
+</script>
+</body>
+</html>
