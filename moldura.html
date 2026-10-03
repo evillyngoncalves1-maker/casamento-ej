@@ -192,8 +192,8 @@
     ctx.restore();
   }
   const CORES = {
-    clara: { linha: '#FAF3E8', sombra: 'rgba(20,30,24,.5)' },
-    verde: { linha: '#2F4838', sombra: 'rgba(250,243,232,.8)' }
+    clara: { linha: '#FAF3E8', sombra: 'rgba(20,30,24,.45)' },
+    verde: { linha: '#2F4838', sombra: 'rgba(250,243,232,.45)' }
   };
   const VARIANTES = {
     'monograma-clara': { topo: 'mono', cor: 'clara' },
@@ -208,7 +208,7 @@
     const gapE = v.topo === 'selo' ? 400 : 430, gapD = v.topo === 'selo' ? 680 : 650;
     ctx.save();
     ctx.strokeStyle = c.linha; ctx.fillStyle = c.linha;
-    ctx.shadowColor = c.sombra; ctx.shadowBlur = 6; ctx.shadowOffsetY = 2;
+    ctx.shadowColor = c.sombra; ctx.shadowBlur = 3; ctx.shadowOffsetY = 1;
     ctx.lineWidth = 3; ctx.lineCap = 'butt';
     const traco = (pts) => { ctx.beginPath(); ctx.moveTo(...pts[0]); pts.slice(1).forEach((p) => ctx.lineTo(...p)); ctx.stroke(); };
     traco([[gapE, 210], [90, 210], [90, 760]]);
@@ -231,16 +231,16 @@
 
     // nomes
     ctx.textBaseline = 'alphabetic';
-    ctx.shadowBlur = 14; ctx.shadowOffsetY = 3;
+    ctx.shadowBlur = 4; ctx.shadowOffsetY = 1.5;
     const partes = [['Evillyn ', 150], ['& ', 110], ['João', 150]];
     const larguras = partes.map(([t, s]) => { ctx.font = `600 ${s}px "Dancing Script", cursive`; return ctx.measureText(t).width; });
     let x = (1080 - larguras.reduce((a, b) => a + b, 0)) / 2;
     partes.forEach(([t, s], i) => { ctx.font = `600 ${s}px "Dancing Script", cursive`; ctx.fillText(t, x, 1572); x += larguras[i]; });
 
     // data com espaçamento largo, letra por letra
-    ctx.shadowBlur = 10; ctx.shadowOffsetY = 2;
-    ctx.font = '300 46px "Josefin Sans", system-ui, sans-serif';
-    const data = '19.12.2026', esp = 46 * 0.42;
+    ctx.shadowBlur = 3; ctx.shadowOffsetY = 1;
+    ctx.font = '400 48px "Josefin Sans", system-ui, sans-serif';
+    const data = '19.12.2026', esp = 48 * 0.4;
     const total = [...data].reduce((s, ch) => s + ctx.measureText(ch).width + esp, 0) - esp;
     let xd = (1080 - total) / 2;
     for (const ch of data) { ctx.fillText(ch, xd, 1690); xd += ctx.measureText(ch).width + esp; }
@@ -261,7 +261,7 @@
   // Espera as fontes antes de desenhar (e redesenha quando chegarem)
   Promise.all([
     document.fonts.load('600 150px "Dancing Script"'),
-    document.fonts.load('300 46px "Josefin Sans"')
+    document.fonts.load('400 48px "Josefin Sans"')
   ]).catch(() => {}).finally(redesenhar);
   redesenhar();
 
@@ -275,7 +275,7 @@
     pararCamera();
     try {
       stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: frontal ? 'user' : 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } },
+        video: { facingMode: frontal ? 'user' : 'environment', width: { ideal: 1920 }, height: { ideal: 1920 } },
         audio: false
       });
       const v = $('video');
@@ -320,10 +320,11 @@
 
   function montar(fonte, fw, fh, espelhar) {
     const ctx = $('canvas').getContext('2d');
+    ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
     ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
     desenharCobrindo(ctx, fonte, fw, fh, espelhar);
     desenharMoldura(ctx, molduraAtual);
-    return new Promise((res) => $('canvas').toBlob(res, 'image/jpeg', 0.92));
+    return new Promise((res) => $('canvas').toBlob(res, 'image/jpeg', 0.95));
   }
 
   async function mostrarPronta(blob) {
