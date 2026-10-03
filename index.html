@@ -99,6 +99,37 @@
     .film-number { font-family: 'Cormorant Garamond', serif; font-size: 2.8rem; font-weight: 300; color: white; line-height: 1; position: relative; }
     .film-sub { font-size: 0.64rem; color: rgba(255,255,255,0.3); margin-top: 5px; position: relative; }
 
+    /* ── CÂMERA COM MOLDURA ── */
+    .moldura-card {
+      display: flex; align-items: center; gap: 16px; text-decoration: none;
+      background: var(--sage); color: white; border-radius: 16px; padding: 16px 18px;
+      margin-bottom: 12px; box-shadow: 0 8px 20px rgba(45,90,61,0.22); transition: transform 0.15s;
+    }
+    .moldura-card:active { transform: scale(0.98); }
+    .moldura-mini {
+      flex-shrink: 0; width: 46px; height: 82px; border-radius: 7px; position: relative;
+      background: linear-gradient(160deg, #5d4a42, #2a2320); overflow: hidden;
+    }
+    .moldura-mini::before {
+      content: ''; position: absolute; inset: 6px 5px; border: 1px solid rgba(250,243,232,0.85);
+      border-top-color: transparent;
+    }
+    .moldura-mini span {
+      position: absolute; top: 1px; left: 0; right: 0; text-align: center;
+      font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 0.8rem; color: #FAF3E8;
+    }
+    .moldura-mini i {
+      position: absolute; bottom: 12px; left: 0; right: 0; text-align: center; font-style: italic;
+      font-family: 'Cormorant Garamond', serif; font-size: 0.42rem; color: #FAF3E8;
+    }
+    .moldura-txt { flex: 1; text-align: left; }
+    .moldura-title { font-family: 'Cormorant Garamond', serif; font-size: 1.25rem; line-height: 1.15; }
+    .moldura-sub { font-size: 0.74rem; color: rgba(255,255,255,0.75); line-height: 1.45; margin-top: 4px; }
+    .moldura-arrow { font-size: 1.3rem; opacity: 0.8; }
+    .ou { display: flex; align-items: center; gap: 10px; color: var(--text-soft); font-size: 0.7rem;
+      letter-spacing: 0.18em; text-transform: uppercase; margin: 6px 0 12px; }
+    .ou::before, .ou::after { content: ''; flex: 1; height: 1px; background: rgba(45,90,61,0.15); }
+
     /* ── UPLOAD ZONE ── */
     .upload-zone {
       border: 2px dashed rgba(45,90,61,0.22); border-radius: 16px; padding: 30px 20px;
@@ -268,7 +299,6 @@
   <nav class="tabs-nav">
     <button class="tab-btn active" data-tab="photos" onclick="switchTab('photos')">📷 Fotos</button>
     <button class="tab-btn" data-tab="audio" onclick="switchTab('audio')">🎤 Recado</button>
-    <button class="tab-btn" onclick="location.href='moldura.html'">🖼️ Moldura</button>
   </nav>
   <div class="scroll-area">
 
@@ -280,10 +310,19 @@
           <p class="film-number"><span id="photos-count">0</span></p>
           <p class="film-sub">📷🎥 envie à vontade!</p>
         </div>
+        <a href="moldura.html" class="moldura-card">
+          <div class="moldura-mini" aria-hidden="true"><span>JE</span><i>Evillyn &amp; João</i></div>
+          <div class="moldura-txt">
+            <p class="moldura-title">Tirar foto com a nossa moldura</p>
+            <p class="moldura-sub">Abre a câmera com o monograma dos noivos. A foto vai para o álbum e fica pronta para os Stories.</p>
+          </div>
+          <span class="moldura-arrow" aria-hidden="true">›</span>
+        </a>
+        <p class="ou">ou</p>
         <label class="upload-zone" id="photo-zone">
           <div class="upload-zone-icon">📸🎥</div>
           <p class="upload-zone-title">Enviar Fotos e Vídeos</p>
-          <p class="upload-zone-sub">Escolha da galeria ou grave agora</p>
+          <p class="upload-zone-sub">Da galeria ou gravando agora, sem moldura</p>
           <input type="file" id="photo-input" accept="image/*,video/*" multiple onchange="handlePhotos(this.files)">
         </label>
         <div id="photo-progress" class="hidden">

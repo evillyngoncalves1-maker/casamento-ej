@@ -59,6 +59,8 @@
     font-size: 14px; letter-spacing: .14em; text-align: center; }
   .btn.principal { background: var(--papel); color: var(--musgo-escuro); }
   .btn.secundario { border: 1px solid rgba(250,243,232,.45); }
+  .btn.enviar { background: #4A6B54; color: var(--papel); }
+  .btn.enviar[disabled] { opacity: .85; }
   .duas { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
   /* Abertura */
@@ -123,6 +125,7 @@
   <section class="controles" id="controles-pronta" hidden>
     <div class="acoes">
       <button class="btn principal" id="btn-compartilhar">Compartilhar nos Stories</button>
+      <button class="btn enviar" id="btn-album" hidden>Enviar para o álbum dos noivos</button>
       <div class="duas">
         <button class="btn secundario" id="btn-salvar">Salvar foto</button>
         <button class="btn secundario" id="btn-outra">Tirar outra</button>
@@ -134,6 +137,7 @@
   <canvas id="canvas" width="1080" height="1920" hidden></canvas>
   <div class="aviso" id="aviso" role="status" hidden></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 (() => {
   'use strict';
@@ -141,6 +145,13 @@
   const MONO_D = 'M53 372C41 370 31 366 23 358C15 350 13 344 13 335C13 328 16 323 23 320C30 316 33 316 39 319C45 322 47 327 47 334C45 352 45 353 47 357C55 370 76 366 83 351C90 337 91 324 91 274L92 234 95 224C103 201 115 186 144 163C159 152 167 142 169 134C170 131 169 130 162 128C153 126 139 118 133 112C124 103 120 95 120 83C120 75 121 74 124 68C130 55 143 46 160 44C173 42 181 44 179 48C178 49 176 50 168 51C153 53 146 56 140 66C137 71 136 82 138 88C143 103 160 115 182 121C197 124 196 125 196 115C196 99 202 83 213 69C236 40 286 25 312 40C328 49 328 73 312 92C300 106 275 121 251 126C244 128 234 130 230 131C226 131 223 132 222 132C221 134 225 144 228 147L231 150 239 148C251 145 262 145 268 148C279 153 278 162 267 167C260 170 244 170 232 165L224 163 217 166C208 171 194 185 186 198C161 237 163 288 191 307C205 316 227 318 246 312C280 300 307 256 299 223C296 208 291 203 278 203C262 203 250 211 242 227C238 234 237 239 236 250L236 260 232 260C226 260 225 258 225 248C225 234 230 223 241 211C253 198 266 193 280 195C302 198 312 214 311 240C309 261 299 282 282 299C269 312 259 318 241 324C232 327 231 327 213 327C191 327 187 326 173 319C136 300 126 252 151 209C159 195 177 177 186 172C189 171 194 168 196 166C199 165 204 162 207 160C211 158 214 157 214 156C214 156 212 154 209 151C207 148 203 143 201 139L198 133 189 133C184 132 180 132 180 132C179 132 178 136 176 140C170 149 163 159 157 164C154 166 148 171 143 174C129 186 114 204 108 216C103 228 101 238 101 251C102 270 107 282 119 298L125 305 124 314C123 324 118 337 113 345C102 364 76 375 53 372ZM122 287C112 273 107 250 111 234C113 224 123 205 126 205C127 205 127 222 127 248C127 276 127 291 126 291C125 291 124 289 122 287ZM92 202C92 200 92 166 92 126C92 55 92 39 89 32C86 25 82 22 72 19C69 19 67 18 67 16C67 13 72 13 110 14C147 14 147 14 141 19C130 29 130 30 127 44C126 48 125 51 122 55C108 74 107 91 121 112L126 120 126 142L126 165 115 176C106 186 102 191 93 205C92 206 92 206 92 202ZM265 160C270 155 264 151 253 153C244 154 239 156 239 157C241 162 261 163 265 160ZM240 121C280 113 312 87 312 62C312 51 306 45 292 44C274 43 258 51 243 70C233 82 224 103 222 117C222 124 221 124 240 121Z';
   const W = 1080, H = 1920;              // tamanho do Stories
   const NOME_ARQUIVO = 'evillyn-e-joao-19-12-2026.jpg';
+
+  // ---------- Álbum dos noivos (mesmo Supabase do app dos convidados) ----------
+  const SB_URL = 'https://rffgwaisnhqnovaazuio.supabase.co';
+  const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJmZmd3YWlzbmhxbm92YWF6dWlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA2MjY4NTksImV4cCI6MjEwNjIwMjg1OX0._34wiljZkBwdms3iu6jiZnYVIOnAvcPupt-1iQnZ7e0';
+  const sb = window.supabase ? window.supabase.createClient(SB_URL, SB_KEY) : null;
+  const convidado = (() => { try { return JSON.parse(localStorage.getItem('ej_guest')); } catch { return null; } })();
+  let enviada = false;
 
   let stream = null;
   let frontal = true;                    // começa na câmera de selfie
@@ -325,6 +336,10 @@
     $('moldura').hidden = true;              // a moldura já está dentro da foto
     $('controles-camera').hidden = true;
     $('controles-pronta').hidden = false;
+    enviada = false;
+    const ba = $('btn-album');
+    ba.hidden = !(sb && convidado && convidado.id);
+    ba.disabled = false; ba.textContent = 'Enviar para o álbum dos noivos';
     pararCamera();
   }
 
@@ -359,6 +374,28 @@
     } else {
       salvar();
       aviso('Foto salva. Agora é só postar pelo Instagram.');
+    }
+  });
+
+  // Envia a foto com moldura para o mesmo álbum do app (bucket e tabela de fotos)
+  $('btn-album').addEventListener('click', async () => {
+    if (enviada || !fotoBlob) return;
+    const ba = $('btn-album');
+    ba.disabled = true; ba.textContent = 'Enviando…';
+    try {
+      const ts = Date.now() + '_' + Math.random().toString(36).slice(2, 5);
+      const path = convidado.id + '/' + ts + '_moldura.jpg';
+      const { error: e1 } = await sb.storage.from('wedding-photos').upload(path, fotoBlob, { contentType: 'image/jpeg', upsert: false });
+      if (e1) throw e1;
+      const url = sb.storage.from('wedding-photos').getPublicUrl(path).data.publicUrl;
+      const { error: e2 } = await sb.from('photos').insert({ guest_id: convidado.id, guest_name: convidado.name, file_path: path, file_url: url, revealed: false });
+      if (e2) throw e2;
+      enviada = true;
+      ba.textContent = '✓ Enviada para o álbum';
+    } catch (e) {
+      console.error(e);
+      ba.disabled = false; ba.textContent = 'Enviar para o álbum dos noivos';
+      aviso('Não deu para enviar agora. Confira a internet e tente de novo.');
     }
   });
 
