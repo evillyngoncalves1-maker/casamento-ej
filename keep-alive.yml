@@ -1,0 +1,23 @@
+name: Supabase Keep-Alive
+
+on:
+  schedule:
+    - cron: '0 10 */4 * *'  # A cada 4 dias às 10h UTC (7h Brasília)
+  workflow_dispatch:         # Permite rodar manualmente também
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase app casamento
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            "https://rffgwaisnhqnovaazuio.supabase.co/rest/v1/guests?select=count" \
+            -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJmZmd3YWlzbmhxbm92YWF6dWlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA2MjY4NTksImV4cCI6MjEwNjIwMjg1OX0._34wiljZkBwdms3iu6jiZnYVIOnAvcPupt-1iQnZ7e0" \
+            -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJmZmd3YWlzbmhxbm92YWF6dWlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA2MjY4NTksImV4cCI6MjEwNjIwMjg1OX0._34wiljZkBwdms3iu6jiZnYVIOnAvcPupt-1iQnZ7e0")
+          echo "Status: $STATUS"
+          if [ "$STATUS" = "200" ]; then
+            echo "✅ Supabase respondendo normalmente!"
+          else
+            echo "⚠️ Status inesperado: $STATUS"
+          fi
