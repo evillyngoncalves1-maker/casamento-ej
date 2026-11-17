@@ -36,10 +36,11 @@
   .flash.ativo { animation: flash .45s ease-out; }
   @keyframes flash { from { opacity: 1; } to { opacity: 0; } }
 
-  /* Filtros de cor (overlay PNG) */
-  .filtro-overlay-img { position: absolute; inset: 0; width: 100%; height: 100%;
-    object-fit: cover; pointer-events: none; opacity: 0; transition: opacity .2s; z-index: 1; }
-  .filtro-overlay-img.ativo { opacity: 1; }
+  /* Moldura PNG (branco) */
+  .opcao-png { width: 44px; height: 78px; border-radius: 8px; overflow: hidden; position: relative;
+    background: #f0ede8; border: 2px solid transparent; opacity: .7; transition: opacity .15s, border-color .15s; }
+  .opcao-png[aria-pressed="true"] { border-color: var(--papel); opacity: 1; }
+  .opcao-png img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
   /* Controles */
   .controles { padding: 14px 18px calc(var(--seguro-base) + 14px); }
@@ -49,18 +50,6 @@
   .opcao.clara-fundo { background: linear-gradient(160deg, #f4ede2, #ddd3c6); }
   .opcao canvas { width: 100%; height: 100%; display: block; }
   .opcao[aria-pressed="true"] { border-color: var(--papel); opacity: 1; }
-
-  /* Botões de filtro */
-  .filtros { display: flex; justify-content: center; gap: 18px; margin-bottom: 12px; }
-  .filtro-btn { display: flex; flex-direction: column; align-items: center; gap: 5px;
-    background: none; border: none; color: var(--papel); cursor: pointer; padding: 0; opacity: .6; transition: opacity .15s; }
-  .filtro-btn[aria-pressed="true"] { opacity: 1; }
-  .filtro-circulo { width: 44px; height: 44px; border-radius: 50%; border: 2px solid transparent;
-    overflow: hidden; transition: border-color .15s; }
-  .filtro-btn[aria-pressed="true"] .filtro-circulo { border-color: var(--papel); }
-  .filtro-circulo img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .filtro-circulo.f-normal { background: linear-gradient(135deg, #6b8c6b, #3b5a3b); }
-  .filtro-label { font-family: "Josefin Sans", system-ui, sans-serif; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; }
 
   .barra { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; max-width: 420px; margin: 0 auto; }
   .lateral { width: 52px; height: 52px; border-radius: 50%; border: 1px solid rgba(250,243,232,.35);
@@ -115,8 +104,8 @@
       <video id="video" autoplay playsinline muted></video>
       <img class="foto-pronta" id="foto-pronta" alt="Sua foto com a moldura" hidden />
       <canvas class="moldura" id="moldura" width="1080" height="1920" aria-hidden="true"></canvas>
-      <img class="filtro-overlay-img" id="fi-branco" src="Filtro_Evillyn_e_Joao_Religioso_branco.png" alt="" aria-hidden="true" />
-      <img class="filtro-overlay-img" id="fi-salvia" src="Filtro_Evillyn_e_Joao_Religioso_salvia.png" alt="" aria-hidden="true" />
+      <img id="preview-branco" src="Filtro_Evillyn_e_Joao_Religioso_branco.png" alt="" aria-hidden="true"
+        style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;opacity:0;transition:opacity .2s;z-index:1;" />
       <div class="flash" id="flash"></div>
     </div>
   </main>
@@ -128,20 +117,7 @@
       <button class="opcao clara-fundo" data-moldura="monograma-verde" aria-pressed="false" aria-label="Monograma, linhas verdes"><canvas width="108" height="192" data-mini="monograma-verde"></canvas></button>
       <button class="opcao" data-moldura="lacre-clara" aria-pressed="false" aria-label="Lacre, linhas claras"><canvas width="108" height="192" data-mini="lacre-clara"></canvas></button>
       <button class="opcao clara-fundo" data-moldura="lacre-verde" aria-pressed="false" aria-label="Lacre, linhas verdes"><canvas width="108" height="192" data-mini="lacre-verde"></canvas></button>
-    </div>
-    <div class="filtros" role="group" aria-label="Escolher filtro">
-      <button class="filtro-btn" data-filtro="normal" aria-pressed="true" aria-label="Sem filtro">
-        <div class="filtro-circulo f-normal"></div>
-        <span class="filtro-label">Normal</span>
-      </button>
-      <button class="filtro-btn" data-filtro="branco" aria-pressed="false" aria-label="Filtro Branco">
-        <div class="filtro-circulo"><img src="Filtro_Evillyn_e_Joao_Religioso_branco.png" alt="Branco" /></div>
-        <span class="filtro-label">Branco</span>
-      </button>
-      <button class="filtro-btn" data-filtro="salvia" aria-pressed="false" aria-label="Filtro Sálvia">
-        <div class="filtro-circulo"><img src="Filtro_Evillyn_e_Joao_Religioso_salvia.png" alt="Sálvia" /></div>
-        <span class="filtro-label">Sálvia</span>
-      </button>
+      <button class="opcao-png" data-moldura="branco-png" aria-pressed="false" aria-label="Moldura Branco"><img src="Filtro_Evillyn_e_Joao_Religioso_branco.png" alt="Branco" /></button>
     </div>
     <div class="barra">
       <button class="lateral esq" id="btn-galeria" aria-label="Escolher foto da galeria">
@@ -188,7 +164,6 @@
   let enviada = false;
 
   let stream = null;
-  let filtroAtual = 'normal';
   let frontal = true;                    // começa na câmera de selfie
   let molduraAtual = 'monograma-clara';
   let fotoBlob = null;
@@ -234,11 +209,22 @@
     'monograma-clara': { topo: 'mono', cor: 'clara' },
     'monograma-verde': { topo: 'mono', cor: 'verde' },
     'lacre-clara':     { topo: 'selo', cor: 'clara' },
-    'lacre-verde':     { topo: 'selo', cor: 'verde' }
+    'lacre-verde':     { topo: 'selo', cor: 'verde' },
+    'branco-png':      { topo: 'png',  cor: 'clara' }
   };
+
+  // Pré-carrega a imagem PNG da moldura branco
+  const IMG_BRANCO = new Image();
+  IMG_BRANCO.src = 'Filtro_Evillyn_e_Joao_Religioso_branco.png';
 
   /** Desenha a moldura em um contexto 1080 × 1920. */
   function desenharMoldura(ctx, nome) {
+    if (nome === 'branco-png') {
+      if (IMG_BRANCO.complete && IMG_BRANCO.naturalWidth) {
+        ctx.drawImage(IMG_BRANCO, 0, 0, W, H);
+      }
+      return;
+    }
     const v = VARIANTES[nome], c = CORES[v.cor];
     const gapE = v.topo === 'selo' ? 400 : 430, gapD = v.topo === 'selo' ? 680 : 650;
     ctx.save();
@@ -284,7 +270,9 @@
 
   function atualizarPreviaMoldura() {
     const cv = $('moldura'), ctx = cv.getContext('2d');
-    ctx.clearRect(0, 0, W, H); desenharMoldura(ctx, molduraAtual);
+    ctx.clearRect(0, 0, W, H);
+    if (molduraAtual !== 'branco-png') desenharMoldura(ctx, molduraAtual);
+    $('preview-branco').style.opacity = molduraAtual === 'branco-png' ? '1' : '0';
   }
   function desenharMiniaturas() {
     document.querySelectorAll('canvas[data-mini]').forEach((cv) => {
@@ -336,21 +324,10 @@
   });
 
   // ---------- Escolha da moldura ----------
-  document.querySelectorAll('.opcao').forEach((b) => b.addEventListener('click', () => {
+  document.querySelectorAll('.opcao, .opcao-png').forEach((b) => b.addEventListener('click', () => {
     molduraAtual = b.dataset.moldura;
     atualizarPreviaMoldura();
-    document.querySelectorAll('.opcao').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
-  }));
-
-  // ---------- Escolha do filtro ----------
-  function aplicarFiltro(filtro) {
-    $('fi-branco').classList.toggle('ativo', filtro === 'branco');
-    $('fi-salvia').classList.toggle('ativo', filtro === 'salvia');
-  }
-  document.querySelectorAll('.filtro-btn').forEach((b) => b.addEventListener('click', () => {
-    filtroAtual = b.dataset.filtro;
-    document.querySelectorAll('.filtro-btn').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
-    aplicarFiltro(filtroAtual);
+    document.querySelectorAll('.opcao, .opcao-png').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
   }));
 
   // ---------- Montagem da foto (foto + moldura em 1080×1920) ----------
@@ -364,20 +341,14 @@
     ctx.restore();
   }
 
-  function montar(fonte, fw, fh, espelhar) {
+  async function montar(fonte, fw, fh, espelhar) {
     const ctx = $('canvas').getContext('2d');
     ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
     ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
     desenharCobrindo(ctx, fonte, fw, fh, espelhar);
-    // Aplica filtro PNG sobre a foto (antes da moldura)
-    if (filtroAtual !== 'normal') {
-      const imgFiltro = filtroAtual === 'branco' ? $('fi-branco') : $('fi-salvia');
-      if (imgFiltro.complete && imgFiltro.naturalWidth) {
-        ctx.drawImage(imgFiltro, 0, 0, W, H);
-      } else {
-        await new Promise(r => { imgFiltro.onload = r; imgFiltro.onerror = r; });
-        ctx.drawImage(imgFiltro, 0, 0, W, H);
-      }
+    // Se moldura PNG, aguarda carregamento se necessário
+    if (molduraAtual === 'branco-png' && !IMG_BRANCO.complete) {
+      await new Promise(r => { IMG_BRANCO.onload = r; IMG_BRANCO.onerror = r; });
     }
     desenharMoldura(ctx, molduraAtual);
     return new Promise((res) => $('canvas').toBlob(res, 'image/jpeg', 0.95));
@@ -391,6 +362,7 @@
     img.hidden = false;
     $('video').hidden = true;
     $('moldura').hidden = true;              // a moldura já está dentro da foto
+    $('preview-branco').style.opacity = '0';
     $('controles-camera').hidden = true;
     $('controles-pronta').hidden = false;
     enviada = false;
